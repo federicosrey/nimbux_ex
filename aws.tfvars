@@ -1,0 +1,8 @@
+region =  "us-west-1"
+instance_type = "t2.micro"
+instance_key = "aws_ec2_pem_filename"
+creds = "%AWS_SHARED_CREDENTIALS_FILE%"
+vpc_cidr = "178.0.0.0/16"
+public_subnet_cidr = "178.0.10.0/24"
+private_subnet_apache_cidr = "178.0.11.0/24"
+private_subnet_nginx_cidr = "178.0.12.0/24"
