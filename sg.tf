@@ -40,9 +40,9 @@ resource "aws_security_group" "alb" {
 
   egress {
     cidr_blocks = ["0.0.0.0/0"]
-    description = "Acceso al puerto 80 de nuestros servidores"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "TCP"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+   
   }
 }   

@@ -14,14 +14,25 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-resource "aws_subnet" "public_subnet" {
+resource "aws_subnet" "public_subnet_az1" {
   vpc_id            = aws_vpc.servers_vpc.id
-  cidr_block        = var.public_subnet_cidr
+  cidr_block        = var.public_subnet_az1_cidr
   map_public_ip_on_launch = true
   availability_zone = "us-west-1b"
 
   tags = {
-    Name = "public-subnet"
+    Name = "public-subnet_az1"
+  }
+}
+
+resource "aws_subnet" "public_subnet_az2" {
+  vpc_id            = aws_vpc.servers_vpc.id
+  cidr_block        = var.public_subnet_az2_cidr
+  map_public_ip_on_launch = true
+  availability_zone = "us-west-1c"
+
+  tags = {
+    Name = "public-subnet_az2"
   }
 }
 
@@ -51,7 +62,7 @@ resource "aws_eip" "eip" {
 
 resource "aws_nat_gateway" "nat_gateway" {
   allocation_id = aws_eip.eip.id
-  subnet_id = aws_subnet.public_subnet.id
+  subnet_id = aws_subnet.public_subnet_az1.id
   tags = {
     "Name" = "nat_gateway"
   }
@@ -87,11 +98,11 @@ resource "aws_route_table" "public_rt" {
 }
 
 resource "aws_route_table_association" "public_rt_asso" {
-  subnet_id      = aws_subnet.public_subnet.id
+  subnet_id      = aws_subnet.public_subnet_az1.id
   route_table_id = aws_route_table.public_rt.id
 }
 
 resource "aws_route_table_association" "private_rt_asso" {
-  subnet_id = aws_subnet.private_subnet_apache.id
+  subnet_id = aws_subnet.private_subnet_nginx.id
   route_table_id = aws_route_table.private_rt.id
 }

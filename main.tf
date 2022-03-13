@@ -10,20 +10,40 @@ provider "aws" {
 # ---------------------------------------
 # Define una instancia EC2 con AMI Ubuntu
 # ---------------------------------------
-resource "aws_instance" "apache-server" {
-  ami                    = "ami-01f87c43e618bf8f0"
+/*resource "aws_instance" "nginx-server" {
+  ami                    = "ami-0a8a24772b8f01294"
   instance_type          = var.instance_type
-  subnet_id              = aws_subnet.private_subnet_apache.id
+  key_name               = var.instance_key
+  subnet_id              = aws_subnet.private_subnet_nginx.id
   vpc_security_group_ids = [aws_security_group.mi_grupo_de_seguridad.id]
-  associate_public_ip_address = "true"
+  //associate_public_ip_address = "true"
   
   user_data = <<-EOF
                 #!/bin/bash
-                echo "*** Installing apache2"
-                sudo apt update -y
-                sudo apt install apache2 -y
-                echo "*** Completed Installing apache2"
-                sudo service apache2 start
+                yum update -y
+                yum install -y nginx
+                systemctl start nginx
+                systemctl enable nginx
+                touch /home/ec2-user/edgardito
+                EOF
+
+  tags = {
+    Name = "nginx-server"
+  }
+}*/
+
+resource "aws_instance" "apache-server" {
+  ami                    = var.ami
+  instance_type          = var.instance_type
+  key_name               = var.instance_key
+  subnet_id              = aws_subnet.private_subnet_apache.id
+  vpc_security_group_ids = [aws_security_group.mi_grupo_de_seguridad.id]
+    
+  user_data = <<-EOF
+                #!/bin/bash
+                apt update -y
+                apt install -y apache2
+                service apache2 start
                 EOF
 
   tags = {
@@ -35,20 +55,19 @@ resource "aws_instance" "apache-server" {
 # Define la segunda instancia EC2 con AMI Ubuntu
 # ----------------------------------------------
 resource "aws_instance" "nginx-server" {
-  ami                    = "ami-01f87c43e618bf8f0"
+  ami                    = var.ami
   instance_type          = var.instance_type
+  key_name               = var.instance_key
   subnet_id              = aws_subnet.private_subnet_nginx.id
   vpc_security_group_ids = [aws_security_group.mi_grupo_de_seguridad.id]
-  associate_public_ip_address = "true"
-
-  user_data = <<-EOF
-                #!/bin/bash
-                echo "*** Installing nginx"
-                sudo apt update -y
-                sudo apt install nginx -y
-                echo "*** Completed Installing nginx"
-                sudo service nginx start
+  
+  user_data = <<EOF
+                #!/bin/bash -xe
+                apt-get update
+                apt-get install -y nginx
+                systemctl start nginx.service
                 EOF
+
   tags = {
     Name = "nginx-server"
   }
@@ -62,15 +81,8 @@ resource "aws_lb" "alb" {
   name               = "terraformers-alb"
   security_groups    = [aws_security_group.alb.id]
 
-  subnets = [aws_subnet.private_subnet_apache.id,aws_subnet.private_subnet_nginx.id]
+  subnets = [aws_subnet.public_subnet_az1.id,aws_subnet.public_subnet_az2.id]
 }
-
-# ----------------------------------------------------
-# Data Source para obtener el ID de la VPC por defecto
-# ----------------------------------------------------
-/*data "aws_vpc" "default" {
-  default = true
-}*/
 
 # ----------------------------------
 # Target Group para el Load Balancer
