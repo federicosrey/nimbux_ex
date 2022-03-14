@@ -2,13 +2,13 @@
 # Define un grupo de seguridad con acceso al puerto 8080
 # ------------------------------------------------------
 
-resource "aws_security_group" "mi_grupo_de_seguridad" {
-  name = "primer-servidor-sg"
+resource "aws_security_group" "servers-sg" {
+  name = "servers-sg"
   vpc_id = aws_vpc.servers_vpc.id
 
   ingress {
     security_groups = [aws_security_group.alb.id]
-    description     = "Acceso al puerto 8080 desde el exterior"
+    description     = "Acceso al puerto 80 desde el exterior"
     from_port       = 80
     to_port         = 80
     protocol        = "TCP"

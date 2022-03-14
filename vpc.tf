@@ -1,4 +1,7 @@
-# Create a VPC
+# --------------
+# Define una VPC
+# --------------
+
 resource "aws_vpc" "servers_vpc" {
   cidr_block = var.vpc_cidr
 
@@ -7,12 +10,20 @@ resource "aws_vpc" "servers_vpc" {
   }
 }
 
+# --------------------------
+# Define un internet gateway
+# --------------------------
+
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.servers_vpc.id
   tags = {
     Name = "vpc_igw"
   }
 }
+
+# -----------------------------------
+# Define una subnet publica en el az1
+# -----------------------------------
 
 resource "aws_subnet" "public_subnet_az1" {
   vpc_id            = aws_vpc.servers_vpc.id
@@ -25,6 +36,10 @@ resource "aws_subnet" "public_subnet_az1" {
   }
 }
 
+# -----------------------------------
+# Define una subnet publica en el az2
+# -----------------------------------
+
 resource "aws_subnet" "public_subnet_az2" {
   vpc_id            = aws_vpc.servers_vpc.id
   cidr_block        = var.public_subnet_az2_cidr
@@ -36,6 +51,10 @@ resource "aws_subnet" "public_subnet_az2" {
   }
 }
 
+# -----------------------------------
+# Define una subnet privada en el az1
+# -----------------------------------
+
 resource "aws_subnet" "private_subnet_apache" {
   vpc_id            = aws_vpc.servers_vpc.id
   cidr_block        = var.private_subnet_apache_cidr
@@ -45,6 +64,10 @@ resource "aws_subnet" "private_subnet_apache" {
     Name = "private-subnet-apache"
   }
 }
+
+# -----------------------------------
+# Define una subnet privada en el az1
+# -----------------------------------
 
 resource "aws_subnet" "private_subnet_nginx" {
   vpc_id            = aws_vpc.servers_vpc.id
@@ -56,9 +79,17 @@ resource "aws_subnet" "private_subnet_nginx" {
   }
 }
 
+# -----------------------------------------
+# Define una elastic ip para el nat gateway
+# -----------------------------------------
+
 resource "aws_eip" "eip" {
   vpc = true
 }
+
+# -----------------------------------------
+# Define un nat gateway para los servidores
+# -----------------------------------------
 
 resource "aws_nat_gateway" "nat_gateway" {
   allocation_id = aws_eip.eip.id
@@ -68,9 +99,9 @@ resource "aws_nat_gateway" "nat_gateway" {
   }
 }
 
-output "nat_gateway_ip" {
-  value = aws_eip.eip.public_ip
-}
+# --------------------------------------------
+# Define un route table para la subnet privada
+# --------------------------------------------
 
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.servers_vpc.id
@@ -83,6 +114,9 @@ resource "aws_route_table" "private_rt" {
   }
 }
 
+# --------------------------------------------
+# Define un route table para la subnet publica
+# --------------------------------------------
 
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.servers_vpc.id
@@ -97,10 +131,18 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
+# ---------------------------------------------------------
+# Define la asociacion de subnets publicas a la route table
+# ---------------------------------------------------------
+
 resource "aws_route_table_association" "public_rt_asso" {
   subnet_id      = aws_subnet.public_subnet_az1.id
   route_table_id = aws_route_table.public_rt.id
 }
+
+# ---------------------------------------------------------
+# Define la asociacion de subnets privadas a la route table
+# ---------------------------------------------------------
 
 resource "aws_route_table_association" "private_rt_asso" {
   subnet_id = aws_subnet.private_subnet_nginx.id
