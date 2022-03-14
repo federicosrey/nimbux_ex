@@ -6,7 +6,7 @@ resource "aws_vpc" "servers_vpc" {
   cidr_block = var.vpc_cidr
 
   tags = {
-    Name = "servers-vpc"
+    Name = var.vpc_name
   }
 }
 
@@ -17,7 +17,7 @@ resource "aws_vpc" "servers_vpc" {
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.servers_vpc.id
   tags = {
-    Name = "vpc_igw"
+    Name = var.ig_name
   }
 }
 
@@ -51,9 +51,9 @@ resource "aws_subnet" "public_subnet_az2" {
   }
 }
 
-# -----------------------------------
-# Define una subnet privada en el az1
-# -----------------------------------
+# ---------------------------------------------
+# Define una subnet privada para los web server
+# ---------------------------------------------
 
 resource "aws_subnet" "private_subnet_apache" {
   vpc_id            = aws_vpc.servers_vpc.id
@@ -62,20 +62,6 @@ resource "aws_subnet" "private_subnet_apache" {
 
   tags = {
     Name = "private-subnet-apache"
-  }
-}
-
-# -----------------------------------
-# Define una subnet privada en el az1
-# -----------------------------------
-
-resource "aws_subnet" "private_subnet_nginx" {
-  vpc_id            = aws_vpc.servers_vpc.id
-  cidr_block        = var.private_subnet_nginx_cidr
-  availability_zone = "us-west-1c"
-
-  tags = {
-    Name = "private-subnet-nginx"
   }
 }
 
@@ -145,6 +131,6 @@ resource "aws_route_table_association" "public_rt_asso" {
 # ---------------------------------------------------------
 
 resource "aws_route_table_association" "private_rt_asso" {
-  subnet_id = aws_subnet.private_subnet_nginx.id
+  subnet_id = aws_subnet.private_subnet_apache.id
   route_table_id = aws_route_table.private_rt.id
 }

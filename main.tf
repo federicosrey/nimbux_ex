@@ -6,6 +6,24 @@ provider "aws" {
   profile = "default"
 }
 
+# -----------------------------
+# Define el algoritmo de la key
+# -----------------------------
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# -----------------------------
+# Define el keypair
+# -----------------------------
+
+resource "aws_key_pair" "ssh" {
+  key_name = var.key_name
+  public_key = tls_private_key.ssh.public_key_openssh
+}
+
+
 # --------------------------------------------------
 # Define una instancia EC2 con AMI Ubuntu con Apache
 # --------------------------------------------------
@@ -13,7 +31,7 @@ provider "aws" {
 resource "aws_instance" "apache-server" {
   ami                    = var.ami
   instance_type          = var.instance_type
-  key_name               = var.instance_key
+  key_name               = aws_key_pair.ssh.key_name
   subnet_id              = aws_subnet.private_subnet_apache.id
   vpc_security_group_ids = [aws_security_group.servers-sg.id]
     
@@ -35,8 +53,8 @@ resource "aws_instance" "apache-server" {
 resource "aws_instance" "nginx-server" {
   ami                    = var.ami
   instance_type          = var.instance_type
-  key_name               = var.instance_key
-  subnet_id              = aws_subnet.private_subnet_nginx.id
+  key_name               = aws_key_pair.ssh.key_name
+  subnet_id              = aws_subnet.private_subnet_apache.id
   vpc_security_group_ids = [aws_security_group.servers-sg.id]
   
   user_data = <<-EOF
@@ -54,8 +72,8 @@ resource "aws_instance" "nginx-server" {
 # Load Balancer público con dos instancias
 # ----------------------------------------
 resource "aws_lb" "alb" {
-  load_balancer_type = "application"
-  name               = "web-alb"
+  load_balancer_type = var.load_balancer_type
+  name               = var.load_balancer_name
   security_groups    = [aws_security_group.alb.id]
 
   subnets = [aws_subnet.public_subnet_az1.id,aws_subnet.public_subnet_az2.id]
@@ -65,7 +83,7 @@ resource "aws_lb" "alb" {
 # Target Group para el Load Balancer
 # ----------------------------------
 resource "aws_lb_target_group" "this" {
-  name     = "alb-target-group"
+  name     = var.tg_name
   port     = 80
   vpc_id   = aws_vpc.servers_vpc.id
   protocol = "HTTP"
@@ -78,10 +96,6 @@ resource "aws_lb_target_group" "this" {
     protocol = "HTTP"
   }
 }
-output "lb_dns_name" {
-  value = aws_lb.alb.dns_name
-}
-
 # ----------------------------------
 # Attachment para el servidor apache
 # ----------------------------------
