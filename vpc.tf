@@ -29,10 +29,10 @@ resource "aws_subnet" "public_subnet_az1" {
   vpc_id            = aws_vpc.servers_vpc.id
   cidr_block        = var.public_subnet_az1_cidr
   map_public_ip_on_launch = true
-  availability_zone = "us-west-1b"
+  availability_zone = var.avz1
 
   tags = {
-    Name = "public-subnet_az1"
+    Name = var.public_subnet_az1_name
   }
 }
 
@@ -44,10 +44,10 @@ resource "aws_subnet" "public_subnet_az2" {
   vpc_id            = aws_vpc.servers_vpc.id
   cidr_block        = var.public_subnet_az2_cidr
   map_public_ip_on_launch = true
-  availability_zone = "us-west-1c"
+  availability_zone = var.avz2
 
   tags = {
-    Name = "public-subnet_az2"
+    Name = var.public_subnet_az2_name
   }
 }
 
@@ -55,13 +55,13 @@ resource "aws_subnet" "public_subnet_az2" {
 # Define una subnet privada para los web server
 # ---------------------------------------------
 
-resource "aws_subnet" "private_subnet_apache" {
+resource "aws_subnet" "private_subnet_servers" {
   vpc_id            = aws_vpc.servers_vpc.id
-  cidr_block        = var.private_subnet_apache_cidr
-  availability_zone = "us-west-1b"
+  cidr_block        = var.private_subnet_servers_cidr
+  availability_zone = var.avz1
 
   tags = {
-    Name = "private-subnet-apache"
+    Name = var.private_subnet_name
   }
 }
 
@@ -81,7 +81,7 @@ resource "aws_nat_gateway" "nat_gateway" {
   allocation_id = aws_eip.eip.id
   subnet_id = aws_subnet.public_subnet_az1.id
   tags = {
-    "Name" = "nat_gateway"
+    "Name" = var.natgtw_name
   }
 }
 
@@ -131,6 +131,6 @@ resource "aws_route_table_association" "public_rt_asso" {
 # ---------------------------------------------------------
 
 resource "aws_route_table_association" "private_rt_asso" {
-  subnet_id = aws_subnet.private_subnet_apache.id
+  subnet_id = aws_subnet.private_subnet_servers.id
   route_table_id = aws_route_table.private_rt.id
 }
